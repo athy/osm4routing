@@ -4,7 +4,7 @@ import bz2, gzip
 import sys
 from optparse import OptionParser
 from sqlalchemy import Table, Column, MetaData, Integer, String, Float, SmallInteger, create_engine
-from sqlalchemy.orm import mapper, sessionmaker
+from sqlalchemy.orm import mapper, sessionmaker, clear_mappers
 from geoalchemy import *
 
 class Node(object):
@@ -20,9 +20,8 @@ class Node(object):
             self.the_geom = wkt_geom
 
 class Edge(object):
-    def __init__(self, id, source, target, length, car, car_rev, bike, bike_rev, foot, the_geom, spatial=False):
+    def __init__(self, source, target, length, car, car_rev, bike, bike_rev, foot, the_geom, spatial=False):
         wkt_geom = 'LINESTRING({0})'.format(the_geom)
-        self.id = id
         self.source = source
         self.target = target
         self.length = length
@@ -38,6 +37,9 @@ class Edge(object):
 
 
 def parse(file, output="csv", edges_name="edges", nodes_name="nodes", spatial=False):
+    
+    clear_mappers()
+    
     if not os.path.exists(file):
         raise IOError("File {0} not found".format(file))
 
@@ -77,7 +79,6 @@ def parse(file, output="csv", edges_name="edges", nodes_name="nodes", spatial=Fa
 
 
         engine = create_engine(output)
-        metadata.drop_all(engine)
         metadata.create_all(engine) 
         mapper(Node, nodes_table)
         mapper(Edge, edges_table)
@@ -118,18 +119,23 @@ def parse(file, output="csv", edges_name="edges", nodes_name="nodes", spatial=Fa
         n.write('"node_id","longitude","latitude"\n')
 
     count = 0
+    overlapping = 0
     for node in nodes:
         if output == "csv":
             n.write("{0},{1},{2}\n".format(node.id, node.lon, node.lat))
+            count += 1
         else:
-            session.add(Node(node.id, node.lon, node.lat, spatial=spatial))
-        count += 1
+            if not session.query(Node).filter_by(original_id=node.id).all():
+                session.add(Node(node.id, node.lon, node.lat, spatial=spatial))
+                count += 1
+            else:
+                overlapping += 1
     if output == "csv":
         n.close()
     else:
         session.commit()
 
-    print "  Wrote {0} nodes\n".format(count)
+    print "  Wrote {0} nodes, ({1} ignored)\n".format(count, overlapping)
 
     print "Step 3: saving the edges"
     edges = p.get_edges()
@@ -141,7 +147,7 @@ def parse(file, output="csv", edges_name="edges", nodes_name="nodes", spatial=Fa
         if output == "csv":
             e.write('{0},{1},{2},{3},{4},{5},{6},{7},{8},LINESTRING({9})\n'.format(edge.edge_id, edge.source, edge.target, edge.length, edge.car, edge.car_d, edge.bike, edge.bike_d, edge.foot, edge.geom))
         else:
-            session.add(Edge(edge.edge_id, edge.source, edge.target, edge.length, edge.car, edge.car_d, edge.bike, edge.bike_d, edge.foot, edge.geom, spatial=spatial))
+            session.add(Edge(edge.source, edge.target, edge.length, edge.car, edge.car_d, edge.bike, edge.bike_d, edge.foot, edge.geom, spatial=spatial))
         count += 1
     if output == "csv":
         e.close()
