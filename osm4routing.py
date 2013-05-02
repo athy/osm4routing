@@ -9,19 +9,18 @@ from geoalchemy import *
 
 class Node(object):
     def __init__(self, id, lon, lat, elevation = 0, the_geom = 0, spatial=False):
-        wkt_geom = 'POINT({0} {1})'.format(lon, lat)
         self.original_id = id
         self.lon = lon
         self.lat = lat
         self.elevation = elevation
         if spatial:
+            wkt_geom = 'POINT({0} {1})'.format(lon, lat)
             self.the_geom = WKTSpatialElement(wkt_geom)
         else:
-            self.the_geom = wkt_geom
+            self.the_geom = None
 
 class Edge(object):
     def __init__(self, source, target, length, car, car_rev, bike, bike_rev, foot, the_geom, spatial=False):
-        wkt_geom = 'LINESTRING({0})'.format(the_geom)
         self.source = source
         self.target = target
         self.length = length
@@ -31,9 +30,10 @@ class Edge(object):
         self.bike_rev = bike
         self.foot = foot
         if spatial:
+            wkt_geom = 'LINESTRING({0})'.format(the_geom)
             self.the_geom = WKTSpatialElement(wkt_geom)
         else:
-            self.the_geom = wkt_geom
+            self.the_geom = None
 
 
 def parse(file, output="csv", edges_name="edges", nodes_name="nodes", spatial=False):
@@ -66,8 +66,8 @@ def parse(file, output="csv", edges_name="edges", nodes_name="nodes", spatial=Fa
             Column('source', Integer, index=True),
             Column('target', Integer, index=True),
             Column('length', Float),
-            Column('car', SmallInteger),
-            Column('car_rev', SmallInteger),
+            Column('car', Integer),
+            Column('car_rev', Integer),
             Column('bike', SmallInteger),
             Column('bike_rev', SmallInteger),
             Column('foot', SmallInteger),

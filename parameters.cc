@@ -17,12 +17,38 @@
 
 #include "parse.h"
 #include <iostream>
+#include <boost/lexical_cast.hpp>
+#include <boost/concept_check.hpp>
+
+int default_max_speed(const int road_type)
+{
+    if(road_type <= 0)
+        return 0;
+    else if(road_type == car_residential)
+        return 30;
+    else if(road_type == car_tertiary)
+        return 50;
+    else if(road_type == car_secondary)
+        return 50;
+    else if(road_type == car_primary)
+        return 90;
+    else if(road_type == car_trunk)
+        return 110;
+    else if(road_type == car_motorway)
+        return 130;
+    else
+        std::cerr << "Unknown road_type: " << road_type << std::endl;
+    
+    return 0;
+}
+
 Edge_property::Edge_property() :
         car_direct(unknown),
         car_reverse(unknown),
         bike_direct(unknown),
         bike_reverse(unknown),
-        foot(unknown)
+        foot(unknown),
+        max_speed(unknown)
     {
     }
 
@@ -63,6 +89,19 @@ void Edge_property::normalize()
     if(car_reverse == unknown) car_reverse = car_forbiden;
     if(bike_reverse == unknown) bike_reverse = bike_forbiden;
     if(foot == unknown) foot = foot_forbiden;
+    
+    if(max_speed > 0)
+    {
+        if(car_direct > 0)
+            car_direct = max_speed;
+        if(car_reverse > 0)
+           car_reverse = max_speed;
+    }
+    else
+    {
+        car_direct = default_max_speed(car_direct);
+        car_reverse = default_max_speed(car_reverse);
+    }
 }
 
 bool Edge_property::update(const std::string & key, const std::string & val)
@@ -185,5 +224,15 @@ bool Edge_property::update(const std::string & key, const std::string & val)
                 bike_reverse = bike_forbiden;
         }
     }
+    
+    else if(key == "maxspeed")
+    {
+        try {
+            max_speed = boost::lexical_cast<int>( val );
+        } catch( boost::bad_lexical_cast const& ) {
+            std::cerr << "Error: max speed value couldn't be parsed: " << val << std::endl;
+        }
+    }
+    
     return this->accessible();
 }

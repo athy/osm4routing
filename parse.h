@@ -3,6 +3,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <iostream>
 
 
 typedef uint64_t node_t;
@@ -33,6 +34,7 @@ class Edge_property
     int bike_direct;
     int bike_reverse;
     int foot;
+    int max_speed;
 
     Edge_property();
 
@@ -70,14 +72,14 @@ struct Edge
     int source;
     int target;
     float length;
-    char car;
-    char car_d;
+    int car;
+    int car_d;
     char bike;
     char bike_d;
     char foot;
     std::string geom;
     Edge() {}
-    Edge(int e, int s, int t, float l, char c, char cd, char b, char bd, char f, const std::string & str) :
+    Edge(int e, int s, int t, float l, int c, int cd, char b, char bd, char f, const std::string & str) :
         edge_id(e), source(s), target(t), length(l),
         car(c), car_d(cd), bike(b), bike_d(bd), foot(f),
         geom(str)

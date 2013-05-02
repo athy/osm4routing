@@ -39,8 +39,8 @@ struct Edge
     int source;
     int target;
     float length;
-    char car;
-    char car_d;
+    int car;
+    int car_d;
     char bike;
     char bike_d;
     char foot;

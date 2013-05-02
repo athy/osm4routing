@@ -174,7 +174,8 @@ vector<Edge> Parser::get_edges() const
     stringstream geom;
     geom.precision(10);
     double length = 0, pred_lon = 0, pred_lat = 0;
-    char car_direct, car_rev, foot, bike_direct, bike_rev;
+    int car_direct, car_rev;
+    char foot, bike_direct, bike_rev;
     int nb;
     int edges_inserted = 0;
     Node n;
